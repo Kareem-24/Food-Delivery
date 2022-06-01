@@ -16,7 +16,9 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { storage } from "../firebase.config";
-import { saveItem } from "../utils/firebaseFunctions";
+import { getAllFooedItems, saveItem } from "../utils/firebaseFunctions";
+import { actionType } from "../context/reducer";
+import { useStateValue } from "../context/stateProvider";
 
 function CreateContainer() {
   const [title, setTitle] = useState("");
@@ -28,12 +30,16 @@ function CreateContainer() {
   const [alertStatus, setAlertStatus] = useState("");
   const [msg, setMsg] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const dataCollection = title || calories || imageAsset || price || category;
+  const [{ foodItems }, dispatch] = useStateValue();
+
+  const dataCollection =
+    !title || !calories || !imageAsset || !price || !category;
 
   const uploadImage = (e) => {
     setIsLoading(true);
-    const imageFile = e.target.file[0];
-    const storageRef = ref(storage, `images${Date.now()}-${imageFile.name}`);
+    const imageFile = e.target.files[0];
+    const storageRef = ref(storage, `images/${Date.now()}-${imageFile.name}`);
+    console.log(imageFile);
     const uploadTask = uploadBytesResumable(storageRef, imageFile);
 
     //show the progress of the upload
@@ -53,16 +59,19 @@ function CreateContainer() {
         }, 4000);
       },
       //if no error found then this function will Execute
+
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setImageAsset(downloadURL);
+          console.log(downloadURL);
           setIsLoading(false);
           setField(true);
           setMsg("Image uploaded successfully");
           setAlertStatus("success");
+
           setTimeout(() => {
-            setField(true);
-          }, 4000);
+            setField(false);
+          }, 3000);
         });
       }
     );
@@ -77,14 +86,14 @@ function CreateContainer() {
       setAlertStatus("success");
       setTimeout(() => {
         setField(true);
-      }, 4000);
+      }, 3000);
     });
   };
 
   const saveDetails = () => {
     setIsLoading(true);
     try {
-      if (!dataCollection) {
+      if (dataCollection) {
         setField(true);
         setMsg("please fill required fields");
         setAlertStatus("danger");
@@ -105,10 +114,10 @@ function CreateContainer() {
         saveItem(data);
         setMsg("Data uploaded successfully");
         setAlertStatus("success");
+        clearData();
         setTimeout(() => {
           setField(true);
-          clearData();
-        }, 4000);
+        }, 3000);
       }
     } catch (error) {
       setMsg("Errro while uploading : Please Try Again");
@@ -116,15 +125,26 @@ function CreateContainer() {
       setTimeout(() => {
         setField(false);
         setIsLoading(false);
-      }, 4000);
+      }, 3000);
     }
+    fetchData();
   };
   const clearData = () => {
     setTitle("");
     setImageAsset(null);
     setCalories("");
     setPrice("");
+    setIsLoading(false);
     setCalories("Select Category");
+  };
+
+  const fetchData = async () => {
+    await getAllFooedItems().then((data) => {
+      dispatch({
+        type: actionType.SET_FOOD_ITEMS,
+        foodItems: data,
+      });
+    });
   };
 
   return (
@@ -158,7 +178,7 @@ function CreateContainer() {
 
         <div className="w-full">
           <select
-            onChange={(e) => setCategory(e.event.value)}
+            onChange={(e) => setCategory(e.target.value)}
             className="outline-none w-full text-base border-b-2 border-gray-200 p-2 rounded-md cursor-pointer"
           >
             <option value="other" className="bg-white">
@@ -175,13 +195,13 @@ function CreateContainer() {
             ))}
           </select>
         </div>
-        <div className="group flex justify-center flex-col border-2 border-dotted border-gray-300 w-full h-225 md:h300 cursor-pointer rounded-lg">
+        <div className="group flex justify-center items-center flex-col border-2 border-dotted border-gray-300 w-full h-225 md:h300 cursor-pointer rounded-lg">
           {isLoading ? (
             <Loader />
           ) : (
             <>
               {!imageAsset ? (
-                <lable className="w-full h-full flex flex-col items-center justify-center cursor-pointer relative">
+                <lable className="w-full h-full flex flex-col items-center justify-center cursor-pointer ">
                   <div className="w-full h-full flex flex-col items-center justify-center ">
                     <MdCloudUpload className="text-gray-500 text-3xl group-hover:text-gray-700" />
                     <p className="text-gray-500  group-hover:text-gray-700">
@@ -197,9 +217,9 @@ function CreateContainer() {
                   />
                 </lable>
               ) : (
-                <div className="relative h-full">
+                <div className="h-full relative">
                   <img
-                    scr={imageAsset}
+                    src={imageAsset}
                     alt=""
                     className="w-full h-full object-cover"
                   />

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import Logo from "../img/logo.png";
 import Avatar from "../img/avatar.png";
 import { MdShoppingBasket, MdAdd, MdLogout } from "react-icons/md";
@@ -12,14 +12,14 @@ import { actionType } from "../context/reducer";
 const Header = () => {
   const firebaseAuth = getAuth(app);
   const provider = new GoogleAuthProvider();
-  const [{ user }, dispatch] = useStateValue();
+  const [{ user, cartShow, cartItems }, dispatch] = useStateValue();
   const [isMenu, setIsMenu] = useState(false);
   const ref = useRef();
 
   const handleLogin = async () => {
     if (!user) {
       const {
-        user: { refreshToken, providerData },
+        user: { providerData },
       } = await signInWithPopup(firebaseAuth, provider);
       dispatch({
         type: actionType.SET_USER,
@@ -41,6 +41,12 @@ const Header = () => {
     });
   };
 
+  const showCart = () => {
+    dispatch({
+      type: actionType.SET_CART_SHOW,
+      cartShow: !cartShow,
+    });
+  };
   // useEffect(() => {
   //   const handleModalClose = (e) => {
   //     if (isMenu && ref.current && !ref.current.contains(e.target)) {
@@ -76,12 +82,13 @@ const Header = () => {
             >
               Menu
             </li>
-            <li
+            <Link
+              to={"/"}
               className="text-base text-textColor hover:text-headingColor duration-100 transition-all ease-in-out cursor-pointer"
               onClick={() => setIsMenu(false)}
             >
               Home
-            </li>
+            </Link>
             <li
               className="text-base text-textColor hover:text-headingColor duration-100 transition-all ease-in-out cursor-pointer"
               onClick={() => setIsMenu(false)}
@@ -96,6 +103,7 @@ const Header = () => {
             </li>
           </motion.ul>
           <motion.div
+            onClick={showCart}
             className="relative flex items-center justify-center"
             whileTap={{ scale: 0.6 }}
           >
@@ -103,9 +111,13 @@ const Header = () => {
               className="text-textColor text-2xl  cursor-pointer"
               size="30"
             />
-            <div className="w-4 h-4 rounded-full bg-cartNumBg flex items-center justify-center absolute top-0 -right-2">
-              <p className="text:xs text-white font-semibold">2</p>
-            </div>
+            {cartItems && cartItems.length > 0 && (
+              <div className="w-4 h-4 rounded-full bg-cartNumBg flex items-center justify-center absolute top-0 -right-2">
+                <p className="text:xs text-white font-semibold">
+                  {cartItems?.length}
+                </p>
+              </div>
+            )}
           </motion.div>
           <div className="relative">
             <motion.img
@@ -153,12 +165,17 @@ const Header = () => {
           whileTap={{ scale: 0.6 }}
         >
           <MdShoppingBasket
+            onClick={showCart}
             className="text-textColor text-2xl  cursor-pointer"
             size="30"
           />
-          <div className="w-4 h-4 rounded-full bg-cartNumBg flex items-center justify-center absolute top-0 -right-2">
-            <p className="text:xs text-white font-semibold">2</p>
-          </div>
+          {cartItems && cartItems.length > 0 && (
+            <div className="w-4 h-4 rounded-full bg-cartNumBg flex items-center justify-center absolute top-0 -right-2">
+              <p className="text:xs text-white font-semibold">
+                {cartItems.length}
+              </p>
+            </div>
+          )}
         </motion.div>
 
         <Link to={"/"} className="flex items-center gap-2">
@@ -193,9 +210,12 @@ const Header = () => {
                 <li className="text-base text-textColor hover:text-headingColor duration-100 transition-all ease-in-out cursor-pointer hover:bg-slate-100  px-4 py-2">
                   Menu
                 </li>
-                <li className="text-base text-textColor hover:text-headingColor duration-100 transition-all ease-in-out cursor-pointer hover:bg-slate-100  px-4 py-2">
+                <Link
+                  to={"/"}
+                  className="text-base text-textColor hover:text-headingColor duration-100 transition-all ease-in-out cursor-pointer hover:bg-slate-100  px-4 py-2"
+                >
                   Home
-                </li>
+                </Link>
                 <li className="text-base text-textColor hover:text-headingColor duration-100 transition-all ease-in-out cursor-pointer hover:bg-slate-100  px-4 py-2">
                   About Us
                 </li>
