@@ -27,7 +27,7 @@ function HomeContainer() {
           </div>
         </div>
         <p className="text-[3rem] font-bold tracking-wider text-headingColor">
-          The Fastes Delivery in
+          The Fastest Delivery in
           <span className="text-orange-600 text-[3.5rem]">Your City</span>
         </p>
 
